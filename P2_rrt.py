@@ -333,7 +333,7 @@ class DubinsRRT(RRT):
                 dist_to_new_point = dist[k]
                 new_state = new_points[k]
                 k+=1
-                if k > (len(dist)+1):
+                if k > (len(dist)-1):
                     break
 
             return new_state #return new point that is the steering distance between x1 and x2.
