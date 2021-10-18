@@ -289,7 +289,7 @@ class DubinsRRT(RRT):
         for i in range(n):
             #temp_dist_to_x = (np.sqrt((V[i][0]-x[0])**2+(V[i][1]-x[1])**2))
             path_to_x = dubins.shortest_path(V[i,:],x,self.turning_radius) # Find shortest dubins path to new configuration from node
-            temp_dist_to_x = dubins.path_length(path_to_x) # Evaluate length of that path
+            temp_dist_to_x = path_to_x.path_length() # Evaluate length of that path
             if temp_dist_to_x < dist_to_x:
                 dist_to_x = temp_dist_to_x
                 min_index = i
@@ -320,7 +320,7 @@ class DubinsRRT(RRT):
         ########## Code starts here ##########
 
         path_to_new_state = dubins.shortest_path(x1,x2,self.turning_radius*1.001) # Find path to new candidate state
-        dist_to_new_state = dubins.path_length(path_to_new_state) # Find distance of that path
+        dist_to_new_state = path_to_new_state.path_length()# Find distance of that path
 
         if dist_to_new_state < eps: # See if distance is within distance limit
             return x2 # return x2 if it's within steering distance
