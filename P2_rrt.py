@@ -282,6 +282,27 @@ class DubinsRRT(RRT):
         import dubins
         ########## Code starts here ##########
         
+
+
+        dist_to_x = 0.0
+        min_index = 0
+        for i in range(n):
+            #temp_dist_to_x = (np.sqrt((V[i][0]-x[0])**2+(V[i][1]-x[1])**2))
+            path_to_x = dubins.shortest_path(V[i,:],x,self.turning_radius) # Find shortest dubins path to new configuration from node
+            temp_dist_to_x = dubins.path_length(path_to_x) # Evaluate length of that path
+            if temp_dist_to_x < dist_to_x:
+                dist_to_x = temp_dist_to_x
+                min_index = i
+            else:
+                if i ==0:
+                    dist_to_x = temp_dist_to_x
+                else:
+                    pass
+                pass
+        #print(min_index)
+        return min_index
+
+        
         ########## Code ends here ##########
 
     def steer_towards(self, x1, x2, eps):
@@ -297,6 +318,21 @@ class DubinsRRT(RRT):
         """
         # HINT: You may find the functions dubins.shortest_path(), d_path.path_length(), and d_path.sample_many() useful
         ########## Code starts here ##########
+
+        path_to_new_state = dubins.shortest_path(x1,x2,self.turning_radius*1.001) # Find path to new candidate state
+        dist_to_new_state = dubins.path_length(path_to_new_state) # Find distance of that path
+
+        if dist_to_new_state < eps: # See if distance is within distance limit
+            return x2 # return x2 if it's within steering distance
+        else:
+            new_points, dist = dubins.sample_many()
+            dist_to_new_point = 0.0
+            k = 0
+            while dist_to_new_state <= eps: # simply go through all the points in the return of sample_many() call to find the one closest to eps
+                dist_to_new_point = dist[k]
+                new_state = new_points[k]
+                k+=1
+            return new_state #return new point that is the steering distance between x1 and x2.
         
         ########## Code ends here ##########
 
