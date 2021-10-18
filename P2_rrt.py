@@ -325,7 +325,7 @@ class DubinsRRT(RRT):
         if dist_to_new_state < eps: # See if distance is within distance limit
             return x2 # return x2 if it's within steering distance
         else:
-            new_points, dist = path_to_new_state.sample_many()
+            new_points, dist = path_to_new_state.sample_many(self.turning_radius*resolution)
             dist_to_new_point = 0.0
             k = 0
             while dist_to_new_state <= eps: # simply go through all the points in the return of sample_many() call to find the one closest to eps
