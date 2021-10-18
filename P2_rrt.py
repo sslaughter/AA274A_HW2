@@ -10,7 +10,7 @@ class RRT(object):
         self.x_init = np.array(x_init)                  # initial state
         self.x_goal = np.array(x_goal)                  # goal state
         self.obstacles = obstacles                      # obstacle set (line segments)
-        self.path = None        # the final path as a list of states
+        self.path = []        # the final path as a list of states
 
     def is_free_motion(self, obstacles, x1, x2):
         """
@@ -74,7 +74,7 @@ class RRT(object):
             None officially (just plots), but see the "Intermediate Outputs"
             descriptions below
         """
-
+        self.path.clear()
         state_dim = len(self.x_init)
 
         # V stores the states that have been added to the RRT (pre-allocated at its maximum size
@@ -105,6 +105,45 @@ class RRT(object):
         #   - the order in which you pass in arguments to steer_towards and is_free_motion is important
 
         ########## Code starts here ##########
+
+        for j in range(max_iters):
+            z = np.random.uniform(0,1)
+            x_rand = np.array([0,0])
+            if z <= goal_bias:
+                x_rand = self.x_goal
+                #print("xrand is goal")
+                #print(x_rand)
+            else:
+                x_rand = np.array(np.random.uniform(self.statespace_lo,self.statespace_hi))
+
+            near_index = self.find_nearest(V,x_rand,n)
+            #print(near_index)
+            x_near = V[near_index,:]
+            #print(near_index)
+            x_new = self.steer_towards(x_near,x_rand,eps)
+
+            if self.is_free_motion(self.obstacles,x_near,x_new):
+                V[n,:] = x_new
+                P[n] = near_index # this is the index of the preceding node (x_near) for the new node. Found from find_nearest()
+                if np.allclose(x_new,self.x_goal):
+                    success = True
+                    x_past = x_new # simply initializing the x_past variable
+                    self.path.append(x_new)
+                    n1 = n # define new n to prevent overriding global n
+                    while not np.allclose(x_past, self.x_init):
+                        n2 = P[n1] #index of preceding node is defined by the value stored in P at the current index
+                        x_past = V[n2,:] # preceding state is the state at index n2 of V
+                        self.path.append(x_past) #append preceding state
+                        n1 = n2 #set current index as the previous past index
+                    print("breaking")
+                    break
+                n+=1
+
+
+
+        self.path = list(reversed(self.path))
+
+
         
         ########## Code ends here ##########
 
@@ -143,6 +182,19 @@ class RRT(object):
             None, but should modify self.path
         """
         ########## Code starts here ##########
+
+        shortened = False
+        while not shortened:
+            shortened = True
+            for t in range(1,len(self.path)-1):
+                if self.is_free_motion(self.obstacles,self.path[t-1],self.path[t+1]):
+                    del self.path[t]
+                    shortened = False
+                    break
+                else:
+                    pass
+
+
         
         ########## Code ends here ##########
 
@@ -152,10 +204,28 @@ class GeometricRRT(RRT):
     between two points is a straight line (Euclidean metric)
     """
 
-    def find_nearest(self, V, x):
+    def find_nearest(self, V, x, n):
         # Consult function specification in parent (RRT) class.
         ########## Code starts here ##########
         # Hint: This should take one line.
+        dist_to_x = 0.0
+        min_index = 0
+        for i in range(n):
+            #temp_dist_to_x = (np.sqrt((V[i][0]-x[0])**2+(V[i][1]-x[1])**2))
+            temp_dist_to_x = np.linalg.norm(x-V[i,:])
+            if temp_dist_to_x < dist_to_x:
+                dist_to_x = temp_dist_to_x
+                min_index = i
+            else:
+                if i ==0:
+                    dist_to_x = temp_dist_to_x
+                else:
+                    pass
+                pass
+        #print(min_index)
+        return min_index
+
+        
         
         ########## Code ends here ##########
 
@@ -163,6 +233,14 @@ class GeometricRRT(RRT):
         # Consult function specification in parent (RRT) class.
         ########## Code starts here ##########
         # Hint: This should take one line.
+        
+        steering_vector = x2-x1
+        norm = np.linalg.norm(steering_vector)
+        if norm < eps:
+            return x2 # return x2 if it's within steering distance
+        else:
+            unit_steering_vector = steering_vector/norm
+            return x1 + eps*unit_steering_vector #return new point that is the steering distance between x1 and x2.
         
         ########## Code ends here ##########
 

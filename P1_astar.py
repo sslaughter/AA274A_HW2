@@ -18,7 +18,7 @@ class AStar(object):
         self.open_set = set()      # the set containing the states that are condidate for future expension
 
         self.est_cost_through = {}  # dictionary of the estimated cost from start to goal passing through state (often called f score)
-        self.cost_to_arrive = {}    # dictionary of the cost-to-arrive at state from start (often called g score)
+        self.cost_to_arrive = {}    # dictionary of the cost-to-arrive at state from start (often called g score), indexed by states
         self.came_from = {}         # dictionary keeping track of each state's parent to reconstruct the path
 
         self.open_set.add(self.x_init)
@@ -39,6 +39,22 @@ class AStar(object):
               useful here
         """
         ########## Code starts here ##########
+
+
+
+        # Check if the state is within the bounds of the map (adapted from is_free() function within class defined below)
+        for dim in range(len(x)):
+            if x[dim] < self.statespace_lo[dim] or x[dim] > self.statespace_hi[dim]: 
+                return False # if state is not within bounds of map, immediately return False
+            else:
+                pass
+
+        if self.occupancy.is_free(x): # Check if the state is within the obstacles using defined is_free function from occupancy object
+            return True # State is not in obstacle, but is in map, so return True
+           
+        else:
+            return False # State is within the map, but also within an obstacle, so return False
+
         
         ########## Code ends here ##########
 
@@ -54,7 +70,9 @@ class AStar(object):
         HINT: This should take one line. Tuples can be converted to numpy arrays using np.array().
         """
         ########## Code starts here ##########
-        
+        dist = np.sqrt((x1[0]-x2[0])**2 + (x1[1]-x2[1])**2)
+        return dist
+    
         ########## Code ends here ##########
 
     def snap_to_grid(self, x):
@@ -87,6 +105,23 @@ class AStar(object):
         """
         neighbors = []
         ########## Code starts here ##########
+        step = int(self.resolution)
+        pos_neighbors = [(x[0],x[1]+step),
+                        (x[0],x[1]-step),
+                        (x[0]-step,x[1]+step),
+                        (x[0]-step,x[1]-step),
+                        (x[0]-step,x[1]),
+                        (x[0]+step,x[1]+step),
+                        (x[0]+step,x[1]-step),
+                        (x[0]+step,x[1])]
+        
+        for neighbor in pos_neighbors:
+            self.snap_to_grid(neighbor)
+            if self.is_free(neighbor):
+                neighbors.append(neighbor)
+            else:
+                pass
+
         
         ########## Code ends here ##########
         return neighbors
@@ -152,6 +187,38 @@ class AStar(object):
                 set membership efficiently using the syntax "if item in set".
         """
         ########## Code starts here ##########
+        # Based on pseudocode in hw handout:
+        # Open/closed sets have already been initialized by the class, as have the initial cost values
+        found_goal = False
+
+        while len(self.open_set) > 0:
+            x_current = self.find_best_est_cost_through() # Get the state within the open set that has the lowest cost to arrive, uses defined dictionary keyed by states
+            if x_current == self.x_goal:
+                found_goal = True
+                break
+            else:
+                pass
+            self.open_set.remove(x_current)
+            self.closed_set.add(x_current)
+            for p_neigh in self.get_neighbors(x_current):
+                if p_neigh in self.closed_set: # Check if the neighbor is in the closed set (has already been looked at), if it has skip
+                    continue
+                ten_cta = self.cost_to_arrive[x_current] + self.distance(x_current,p_neigh) # get cost to arrive of current neighbor being evaluated; this is the cost to get there through x_current
+                if p_neigh not in self.open_set: # add new neighbor into open set if it's not already there
+                    self.open_set.add(p_neigh)
+                elif ten_cta > self.cost_to_arrive[p_neigh]: # if the neighbor is already in open set, check if the cost to get there along the current path is less than the cost to get there when it was originally added. If it's not, skip this neighbor.
+                    continue
+                self.came_from[p_neigh] = x_current
+                self.cost_to_arrive[p_neigh] = ten_cta
+                self.est_cost_through[p_neigh] = ten_cta + self.distance(p_neigh,self.x_goal)
+
+
+        if found_goal == True:
+            self.path = self.reconstruct_path()
+            return True
+        else:
+            return False
+
         
         ########## Code ends here ##########
 
