@@ -275,7 +275,7 @@ class DubinsRRT(RRT):
         self.turning_radius = turning_radius
         super(self.__class__, self).__init__(statespace_lo, statespace_hi, x_init, x_goal, obstacles)
 
-    def find_nearest(self, V, x):
+    def find_nearest(self, V, x,n):
         # Consult function specification in parent (RRT) class.
         # HINT: You may find the functions dubins.shortest_path() and path_length() useful
         # HINT: The order of arguments for dubins.shortest_path() is important for DubinsRRT.
