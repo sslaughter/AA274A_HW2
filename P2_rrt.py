@@ -321,6 +321,7 @@ class DubinsRRT(RRT):
 
         path_to_new_state = dubins.shortest_path(x1,x2,self.turning_radius*1.001) # Find path to new candidate state
         dist_to_new_state = path_to_new_state.path_length()# Find distance of that path
+        resolution = np.pi/6
 
         if dist_to_new_state < eps: # See if distance is within distance limit
             return x2 # return x2 if it's within steering distance
