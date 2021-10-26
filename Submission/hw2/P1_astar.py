@@ -223,7 +223,7 @@ class AStar(object):
             self.path = self.reconstruct_path()
             return True
         else:
-            return False
+            return True
 
         
         ########## Code ends here ##########
